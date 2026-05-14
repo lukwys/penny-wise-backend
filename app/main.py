@@ -1,12 +1,14 @@
 from fastapi import FastAPI
+from fastapi.concurrency import asynccontextmanager
 
 from .database import create_db_and_tables
 
 app = FastAPI()
 
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
   create_db_and_tables()
+  yield
 
 @app.get("/health")
 async def health():
