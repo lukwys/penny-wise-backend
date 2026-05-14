@@ -25,7 +25,7 @@ async def health():
 
 
 @app.post("/users")
-async def createUser(
+async def create_user(
     email: EmailStr,
     password: Annotated[str, Depends(validate_password)],
     user_name: Annotated[str, Query(min_length=4)],
