@@ -38,6 +38,27 @@ An application for intelligent expense management based on receipt scans. The us
 - Automatic API documentation (Swagger / OpenAPI)
 - Mobile First responsive design
 
-## 5. Database Schema
+## 5. Project Structure
 
-## 6. Implementation Order
+```
+app/
+├── main.py          # FastAPI entry point, router registration
+├── database.py      # DB connection, engine, session
+├── models/          # SQLModel classes — define tables and validate data
+├── routers/         # API endpoints grouped by feature (auth, receipts, stats)
+└── services/        # Business logic separated from routers (OCR, AI parser, auth)
+```
+
+### Request flow
+
+```
+request → router → service → model (database)
+```
+
+- **router** — receives request, returns response, no business logic
+- **service** — does the actual work (OCR, Claude API call, calculations)
+- **model** — defines the data structure and maps to a database table
+
+## 6. Database Schema
+
+## 7. Implementation Order
