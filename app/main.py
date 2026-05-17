@@ -1,10 +1,15 @@
-from fastapi import FastAPI, Query, Depends
+from fastapi import FastAPI, HTTPException, Query, Depends, Request
 from typing import Annotated
 from contextlib import asynccontextmanager
+from fastapi.responses import JSONResponse
+from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import EmailStr
-from sqlmodel import Session
+from sqlmodel import Session, select
+from sqlalchemy.exc import IntegrityError
+import bcrypt
+from pydantic import BaseModel
 
-from app.services.auth import hash_password, validate_password
+from app.services.auth import create_access_token, hash_password, validate_password
 
 from .database import create_db_and_tables, engine
 from .models.user import User
@@ -17,6 +22,16 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+@app.exception_handler(IntegrityError)
+def integrity_exepction_handler(_request: Request, _exc: IntegrityError):
+    return JSONResponse(status_code=409, content={"message": "Email already used"})
 
 
 @app.get("/health")
@@ -36,3 +51,24 @@ async def create_user(
     with Session(engine) as session:
         session.add(user)
         session.commit()
+
+
+@app.post("/sessions")
+async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
+    with Session(engine) as session:
+        statement = select(User).where(form_data.username == User.email)
+        user = session.exec(statement).first()
+
+        if user is None:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        verify_password = bcrypt.checkpw(
+            form_data.password.encode(), user.password_hash.encode()
+        )
+
+        if not verify_password:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        access_token = create_access_token({"sub": form_data.username})
+
+        return Token(access_token=access_token, token_type="bearer")
