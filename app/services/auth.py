@@ -3,11 +3,14 @@ import os
 import bcrypt
 import re
 from typing import Annotated
-from fastapi import Query, HTTPException
+from fastapi import Depends, Query, HTTPException
+from fastapi.security import OAuth2PasswordBearer
 import jwt
 from datetime import datetime, timezone, timedelta
 
 SECRET_KEY = os.getenv("SECRET_KEY")
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="sessions")
 
 if not SECRET_KEY:
     raise RuntimeError("SECRET_KEY is not set")
@@ -38,3 +41,10 @@ def create_access_token(data: dict):
     encoded_jwt = jwt.encode(data_copy, SECRET_KEY, "HS256")
 
     return encoded_jwt
+
+
+def validate_token(token: str = Depends(oauth2_scheme)):
+    try:
+        jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+    except jwt.PyJWTError:
+        raise HTTPException(401, "Invalid token")

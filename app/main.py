@@ -1,15 +1,24 @@
-from fastapi import FastAPI, HTTPException, Query, Depends, Request
+from dotenv import load_dotenv
+
+load_dotenv()
+from app.services.expenses import scan_receipt_text
+from fastapi import FastAPI, HTTPException, Query, Depends, Request, UploadFile
 from typing import Annotated
 from contextlib import asynccontextmanager
 from fastapi.responses import JSONResponse
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import EmailStr
 from sqlmodel import Session, select
 from sqlalchemy.exc import IntegrityError
 import bcrypt
 from pydantic import BaseModel
 
-from app.services.auth import create_access_token, hash_password, validate_password
+from app.services.auth import (
+    create_access_token,
+    hash_password,
+    validate_password,
+    validate_token,
+)
 
 from .database import create_db_and_tables, engine
 from .models.user import User
@@ -72,3 +81,10 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
         access_token = create_access_token({"sub": form_data.username})
 
         return Token(access_token=access_token, token_type="bearer")
+
+
+@app.post("/expenses/scan", dependencies=[Depends(validate_token)])
+async def scan_receipt(receipt: UploadFile):
+    scanned_text = await scan_receipt_text(receipt)
+
+    return scanned_text
