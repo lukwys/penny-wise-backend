@@ -1,7 +1,9 @@
 from dotenv import load_dotenv
 
+from app.exceptions import OcrError, ParsingError
+
 load_dotenv()
-from app.services.expenses import scan_receipt_text
+from app.services.expenses import generate_ai_content, scan_receipt_text
 from fastapi import FastAPI, HTTPException, Query, Depends, Request, UploadFile
 from typing import Annotated
 from contextlib import asynccontextmanager
@@ -43,6 +45,15 @@ def integrity_exepction_handler(_request: Request, _exc: IntegrityError):
     return JSONResponse(status_code=409, content={"message": "Email already used"})
 
 
+@app.exception_handler(OcrError)
+def ocr_exception_handler(_request: Request, exc: OcrError):
+    return JSONResponse(status_code=422, content={"message": str(exc)})
+
+@app.exception_handler(ParsingError)
+def parsing_exception_handler(_request, exc: ParsingError):
+    return JSONResponse(status_code=502, content={"message": str(exc)})
+
+
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
@@ -78,7 +89,7 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
         if not verify_password:
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
-        access_token = create_access_token({"sub": form_data.username})
+        access_token = create_access_token({"sub": user.id})
 
         return Token(access_token=access_token, token_type="bearer")
 
@@ -87,4 +98,4 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
 async def scan_receipt(receipt: UploadFile):
     scanned_text = await scan_receipt_text(receipt)
 
-    return scanned_text
+    return generate_ai_content(scanned_text)
