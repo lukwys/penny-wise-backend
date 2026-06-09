@@ -1,45 +1,33 @@
-import json
-import os
-
 import easyocr
 from fastapi import UploadFile
-from google import genai
 
-from app.exceptions import OcrError, ParsingError
+from app.exceptions import OcrError
 
 reader = easyocr.Reader(lang_list=["pl"])
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-
-RECEIPT_PARSE_PROMPT = (
-    "You are a receipt parser. Extract all purchased items and their prices from the following receipt text. "
-    "Return a JSON array where each element has \"name\" and \"price\" (as a number). "
-    "Return only the JSON, no explanation.\n\nReceipt:\n{scanned_text}"
-)
 
 
 async def scan_receipt_text(receipt: UploadFile) -> list[str]:
     try:
-        results = reader.readtext(await receipt.read())
+        results = reader.readtext(await receipt.read(), ycenter_ths=0.3)
     except Exception as e:
         raise OcrError() from e
 
     if not results:
         raise OcrError("No text found in image")
 
-    return [item[1] for item in results]
+    filtered_items = filter(lambda item: item[2] >= 0.5, results)
+    sorted_items = sorted(filtered_items, key=lambda item: item[0][0][1])
 
+    threshold = 40
 
-def generate_ai_content(scanned_text: str):
-    try:
-        response = client.models.generate_content(
-            model="gemini-3.5-flash",
-            contents=RECEIPT_PARSE_PROMPT.format(scanned_text=scanned_text)
-        )
-    except Exception as e:
-        raise ParsingError("AI model did not return a response") from e
+    rows = []
 
-    try:
-        return json.loads(response.text)
+    for item in sorted_items:
+        item_y = item[0][0][1]
 
-    except json.JSONDecodeError as e:
-        raise ParsingError("AI model returned an unexpected response format") from e
+        if not rows or item_y - int(rows[-1][0][0][0][1]) > threshold:
+            rows.append([item])
+        else:
+            rows[-1].append(item)
+
+    return [item[1] for item in sorted_items]

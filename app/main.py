@@ -3,7 +3,8 @@ from dotenv import load_dotenv
 from app.exceptions import OcrError, ParsingError
 
 load_dotenv()
-from app.services.expenses import generate_ai_content, scan_receipt_text
+from app.services.ai_parser import get_parser
+from app.services.expenses import scan_receipt_text
 from fastapi import FastAPI, HTTPException, Query, Depends, Request, UploadFile
 from typing import Annotated
 from contextlib import asynccontextmanager
@@ -90,7 +91,7 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
         if not verify_password:
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
-        access_token = create_access_token({"sub": user.id})
+        access_token = create_access_token({"sub": str(user.id)})
 
         return Token(access_token=access_token, token_type="bearer")
 
@@ -98,5 +99,6 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
 @app.post("/expenses/scan", dependencies=[Depends(validate_token)])
 async def scan_receipt(receipt: UploadFile):
     scanned_text = await scan_receipt_text(receipt)
+    parser = get_parser()
 
-    return generate_ai_content(scanned_text)
+    return parser.parse(scanned_text)
