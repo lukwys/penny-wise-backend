@@ -4,7 +4,7 @@ from app.exceptions import OcrError, ParsingError
 
 load_dotenv()
 from app.services.ai_parser import get_parser
-from app.services.expenses import scan_receipt_text
+from app.services.receipt_scanner import scan_receipt_text
 from fastapi import FastAPI, HTTPException, Query, Depends, Request, UploadFile
 from typing import Annotated
 from contextlib import asynccontextmanager

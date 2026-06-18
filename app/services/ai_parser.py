@@ -8,8 +8,8 @@ from app.exceptions import ParsingError
 
 RECEIPT_PARSE_PROMPT = (
     "You are a receipt parser. Extract all purchased items and their final prices from the following receipt text. "
-    "If any line with a negative value appears after an item, treat it as a discount and subtract it from the item's price, "
-    "returning only the final price. "
+    # "If any line with a negative value appears after an item, treat it as a discount and subtract it from the item's price, "
+    "returning only the final price."
     'Return a JSON array where each element has "name" and "price" (as a number). '
     "Return only raw JSON array, no markdown, no code blocks, no explanation.\n\nReceipt:\n{scanned_text}"
 )
@@ -36,10 +36,7 @@ class GeminiParser(AIParser):
         except Exception as e:
             raise ParsingError(e.message) from e
 
-        try:
-            return json.loads(response.text)
-        except json.JSONDecodeError as e:
-            raise ParsingError("AI model returned an unexpected response format") from e
+        return parse_response(response.text)
 
 
 class ClaudeParser(AIParser):
@@ -60,12 +57,16 @@ class ClaudeParser(AIParser):
         except Exception as e:
             raise ParsingError(e.message) from e
 
-        try:
-            text = re.sub(r"```(?:json)?\s*", "", response.content[0].text).strip()
-            
-            return json.loads(text)
-        except json.JSONDecodeError as e:
-            raise ParsingError("AI model returned an unexpected response format") from e
+        return parse_response(response.content[0].text)
+
+
+def parse_response(text: str):
+    try:
+        text = re.sub(r"```(?:json)?\s*", "", text).strip()
+
+        return json.loads(text)
+    except json.JSONDecodeError as e:
+        raise ParsingError("AI model returned an unexpected response format") from e
 
 
 def get_parser():
