@@ -45,6 +45,8 @@ def create_access_token(data: dict):
 
 def validate_token(token: str = Depends(oauth2_scheme)):
     try:
-        jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+
+        return int(payload["sub"])
     except jwt.PyJWTError:
         raise HTTPException(401, "Invalid token")
