@@ -7,11 +7,21 @@ from google import genai
 from app.exceptions import ParsingError
 
 RECEIPT_PARSE_PROMPT = (
-    "You are a receipt parser. Extract all purchased items and their final prices from the following receipt text. "
-    # "If any line with a negative value appears after an item, treat it as a discount and subtract it from the item's price, "
-    "returning only the final price."
-    'Return a JSON array where each element has "name" and "price" (as a number). '
-    "Return only raw JSON array, no markdown, no code blocks, no explanation.\n\nReceipt:\n{scanned_text}"
+    "You are a receipt parser. Extract data from the following receipt text.\n\n"
+    "Return a single JSON object with these fields:\n"
+    "- vendor: string\n"
+    "- date: string (ISO 8601 format, e.g. '2024-01-15')\n"
+    "- total_amount: number\n"
+    "- currency: string (e.g. 'PLN', 'USD')\n"
+    "- category: string (e.g. 'groceries', 'electronics', 'restaurant')\n"
+    "- items: array of objects, each with:\n"
+    "  - name: string\n"
+    "  - price: number (final price after any discounts)\n\n"
+    "Rules:\n"
+    # "- If a negative value appears after an item, it is a discount – subtract it and return only the final price.\n"
+    "- Use the total from the receipt for total_amount, do not sum items yourself.\n"
+    "- Return only raw JSON, no markdown, no code blocks, no explanation.\n\n"
+    "Receipt:\n{scanned_text}"
 )
 
 genai_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
