@@ -15,7 +15,7 @@ async def decode_image(uloaded_image: UploadFile) -> MatLike:
     image = cv2.imdecode(image_buffer, cv2.IMREAD_COLOR)
 
     if image is None:
-        OcrError("Can't decode an image")
+        raise OcrError("Can't decode an image")
 
     return image
 
@@ -67,6 +67,8 @@ async def scan_receipt_text(receipt: UploadFile) -> list[str]:
     try:
         preprocesed_image = await preprocess_receipt_image(receipt)
         results = reader.readtext(preprocesed_image, ycenter_ths=0.3)
+    except OcrError:
+        raise
     except Exception as e:
         raise OcrError() from e
 

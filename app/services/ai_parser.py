@@ -44,7 +44,7 @@ class GeminiParser(AIParser):
                 ),
             )
         except Exception as e:
-            raise ParsingError(e.message) from e
+            raise ParsingError(str(e)) from e
 
         return parse_response(response.text)
 
@@ -65,7 +65,7 @@ class ClaudeParser(AIParser):
                 ],
             )
         except Exception as e:
-            raise ParsingError(e.message) from e
+            raise ParsingError(str(e)) from e
 
         return parse_response(response.content[0].text)
 
