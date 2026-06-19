@@ -5,7 +5,7 @@ from app.models.item import Item
 
 load_dotenv()
 from app.models.expense import Expense
-from app.schemas.expense import ExpenseCreate
+from app.schemas.expense import ExpenseCreate, ExpenseRead
 from app.services.ai_parser import get_parser
 from app.services.receipt_scanner import scan_receipt_text
 from app.schemas.token import Token
@@ -140,3 +140,17 @@ async def create_expense(
 
         session.add
         session.commit()
+
+
+@app.get("/expenses/recent", response_model=list[ExpenseRead])
+async def get_recent_expenses(user_id: Annotated[int, Depends(validate_token)]):
+    with Session(engine) as session:
+        statement = (
+            select(Expense)
+            .where(Expense.user_id == user_id)
+            .order_by(Expense.date.desc())
+            .limit(10)
+        )
+        expenses = session.exec(statement).all()
+
+        return expenses
