@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -n --arg ctx \"$(cat docs/COLLABORATION.md docs/PROJECT.md)\" '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":$ctx}}'",
+            "statusMessage": "Loading project docs..."
+          }
+        ]
+      }
+    ]
+  }
+}
