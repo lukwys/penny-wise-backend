@@ -11,3 +11,11 @@ class ExpenseCreate(BaseModel):
     currency: str
     category: str
     items: list[ItemCreate]
+
+
+class ExpenseRead(BaseModel):
+    vendor: str
+    date: date
+    total_amount: float
+    currency: str
+    category: str
