@@ -10,7 +10,3 @@ DB_URL = (
 )
 
 engine = create_engine(DB_URL)
-
-
-def create_db_and_tables():
-    SQLModel.metadata.create_all(engine)
