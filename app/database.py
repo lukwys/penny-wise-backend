@@ -1,4 +1,4 @@
-from sqlmodel import create_engine, SQLModel
+from sqlmodel import create_engine
 import os
 
 POSTGRES_USER = os.getenv("POSTGRES_USER")
