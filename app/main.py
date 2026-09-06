@@ -1,9 +1,6 @@
-from dotenv import load_dotenv
-
 from app.exceptions import OcrError, ParsingError
 from app.models.item import Item
 
-load_dotenv()
 from app.models.expense import Expense
 from app.schemas.expense import ExpenseCreate, ExpenseRead
 from app.services.ai_parser import get_parser
@@ -26,17 +23,10 @@ from app.services.auth import (
     validate_token,
 )
 
-from .database import create_db_and_tables, engine
+from .database import engine
 from .models.user import User
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    create_db_and_tables()
-    yield
-
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 
 CONSTRAINT_MESSAGES = {
