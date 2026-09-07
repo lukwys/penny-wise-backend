@@ -8,7 +8,6 @@ from app.services.receipt_scanner import scan_receipt_text
 from app.schemas.token import Token
 from fastapi import FastAPI, HTTPException, Query, Depends, Request, UploadFile
 from typing import Annotated
-from contextlib import asynccontextmanager
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import EmailStr
