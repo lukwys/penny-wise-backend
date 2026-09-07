@@ -12,9 +12,9 @@ from app.services.auth import (
     validate_token,
 )
 
-expenses_router = APIRouter(prefix="/expenses", tags=["expenses"])
+expenses_router = APIRouter(prefix="/expenses", tags=["expenses"], dependencies=[Depends(validate_token)])
 
-@expenses_router.post("/scan", dependencies=[Depends(validate_token)])
+@expenses_router.post("/scan")
 async def scan_receipt(receipt: UploadFile):
     scanned_text = await scan_receipt_text(receipt)
     parser = get_parser()
