@@ -14,10 +14,6 @@ CONSTRAINT_MESSAGES = {
     "fallback": "Database constraint violated",
 }
 
-app.include_router(auth_router)
-app.include_router(expenses_router)
-
-
 @app.exception_handler(IntegrityError)
 def integrity_exepction_handler(_request: Request, exc: IntegrityError):
     error_code = int(exc.orig.pgcode)
@@ -48,6 +44,8 @@ def ocr_exception_handler(_request: Request, exc: OcrError):
 def parsing_exception_handler(_request, exc: ParsingError):
     return JSONResponse(status_code=502, content={"message": str(exc)})
 
+app.include_router(auth_router)
+app.include_router(expenses_router)
 
 @app.get("/health")
 async def health():
