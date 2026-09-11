@@ -1,5 +1,9 @@
-from sqlmodel import SQLModel, Field
+from sqlmodel import Relationship, SQLModel, Field
 from decimal import Decimal
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.expense import Expense
 
 
 class Item(SQLModel, table=True):
@@ -7,3 +11,4 @@ class Item(SQLModel, table=True):
     name: str
     price: Decimal = Field(max_digits=10, decimal_places=2)
     expense_id: int = Field(foreign_key="expense.id")
+    expense: "Expense" = Relationship(back_populates="items")
