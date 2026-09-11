@@ -5,7 +5,7 @@ from sqlmodel import select
 from app.database import SessionDep
 from app.models.item import Item
 from app.models.expense import Expense
-from app.schemas.expense import ExpenseCreate, ExpenseRead
+from app.schemas.expense import ExpenseCreate, ExpenseRead, ExpenseWithItems
 from app.services.ai_parser import get_parser
 from app.services.receipt_scanner import scan_receipt_text
 from app.services.auth import (
@@ -22,23 +22,22 @@ async def scan_receipt(receipt: UploadFile):
     return parser.parse(scanned_text)
 
 
-@expenses_router.post("")
+@expenses_router.post("", response_model=ExpenseWithItems, status_code=201)
 async def create_expense(
-    expense: ExpenseCreate, user_id: Annotated[int, Depends(validate_token)], session: SessionDep
+    expense: ExpenseCreate,
+    user_id: Annotated[int, Depends(validate_token)],
+    session: SessionDep,
 ):
-    exp = Expense(user_id=user_id, **expense.model_dump(exclude={"items"}))
+    exp = Expense(
+        user_id=user_id,
+        **expense.model_dump(exclude={"items"}),
+        items=[Item(**item.model_dump()) for item in expense.items],
+    )
 
     session.add(exp)
-    session.flush()
-
-    for item in expense.items:
-        expense_item = Item(expense_id=exp.id, **item.model_dump())
-        session.add(expense_item)
-
     session.commit()
 
     return exp
-        
 
 
 @expenses_router.get("/recent", response_model=list[ExpenseRead])
